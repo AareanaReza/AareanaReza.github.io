@@ -1,0 +1,417 @@
+<!doctype html>
+<html>
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+<style> 
+    circle {fill: lightpink; stroke: black;} 
+    div.tooltip {
+        position: absolute;
+        text-align: center;
+        padding: .2rem;
+        background: #313639;
+        color: #f9f9f9;
+        border: 0px;
+        border-radius: 8px;
+        pointer-events: none;
+        font-size: .7rem; } 
+    #backButton {
+        position: relative;
+        bottom: 800px; 
+        margin-left: -140px;
+        font-size: large;
+        color: whitesmoke;
+        background-color: cadetblue;}
+    #nextButton {
+        position: relative;
+        bottom: 800px; 
+        margin-left: 90px;
+        font-size: large;
+        color: whitesmoke;
+        background-color: cadetblue;}
+</style>
+<body onload='init()' style="background-color:whitesmoke">
+    <h1> Salary Comparisons Across Different Data Science Jobs </h1>
+    <p style="font-size:18px"> &emsp; Data Science is a field that is currently booming and has a growing number of job opportunities.
+         This career field also encompasses a variety of different job titles. <br> All of these jobs cover a diverse range of qualities, 
+         for example various levels of experience, skill sets, and salary expetations. There are a lot of possibilities <br> for people who wish 
+         to pursue a career in this field, but since there are so many options it can be intimadating to find a role that is best suited to you.
+         The graph below <br> is a tool to help people find somthing that fits their preferred salary expectations, in addition to other preference 
+         like experience level, employment type, remote ratio, <br> and location. The graph also allows users to easily sort through and compare 
+         particular data science positions based on things like popularity and availablility.
+    </p>
+    <p style="font-size:18px"> &emsp; Click through the NEXT and BACK buttons to learn more and be guided through the graph. And, at the end, 
+        get the oppurtunity to explore the graph yourself!
+    </p>
+    <p style="font-size:13px"> &emsp; Note: Some outliers have been excluded from the graph for visualization purposes </p>
+    <p> <br>
+    </p>
+<svg width=8000 height=750 id="chart"></svg>
+<script>
+async function init() {
+    // Data
+    const data = await d3.csv('https://AareanaReza.github.io/DataScience-JobSalaries-Dataset.csv')
+
+    // Currect Scene is initially 1, intro page
+    var currectScene = 1;
+
+    // SVG
+    var svg = d3.select("svg"),
+        margin = 200,
+        width = svg.attr("width") - margin,
+        height = svg.attr("height") - margin
+
+    // Scale
+    var xScale = d3.scaleBand().domain(data.map(function (d) {return d.job_title;})).range([0, width]).padding(0.5);
+    var yScale = d3.scaleLinear().domain([0,375000]).range([height, 0]);
+
+    // Title
+    d3.select("svg").append("text")
+        .attr("class", "title")
+        .attr("text-anchor", "middle")
+        .attr("x", 500)
+        .attr("y", 65)
+        .text("Data Science Roles vs Salary").style("font-size", "40px");
+
+    // Axis
+    var g = svg.append("g")
+        .attr("transform", "translate(" + 100 + "," + 100 + ")");
+
+    //X Axis
+    g.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(xScale).tickFormat(function(d){
+           return d;}));
+    // X Label
+    d3.select("svg").append("text")
+        .attr("class", "x label")
+        .attr("text-anchor", "middle")
+        .attr("x", 750)
+        .attr("y", 700)
+        .text("Job Title").style("font-size", "25px");
+    
+    // Y Axis
+    g.append("g")
+        .call(d3.axisLeft(yScale).tickFormat(function(d){
+        return "$" + d;}).ticks(8));
+
+    // Y Label
+    d3.select("svg")
+        .append("text")
+        .attr("class", "y label")
+        .attr("text-anchor", "end")
+        .attr("y", 10)
+        .attr("dy", ".75em")
+        .attr("x", -300)
+        .attr("transform", "rotate(-90)")
+        .text("Salary of Job in USD ($)").style("font-size", "25px");
+    
+    // Tooltip
+    var div = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
+    // Graph   
+    g.selectAll()
+         .data(data)
+         .enter()
+         .append("circle") 
+         .attr("cx", function(d) { return xScale(d.job_title); })
+         .attr("cy", function(d) { return yScale( parseInt(d.salary_in_usd));})
+         .attr("r", 3);
+
+    
+    // Next Button Function
+    function changeSceneNext() {
+        if (currectScene == 1) {
+            createScene2();
+        } else if (currectScene == 2) {
+            d3.selectAll("g").filter(function(){return (d3.select(this).attr("class") == "annotations");}).remove();
+            createScene3();
+        } else if (currectScene == 3) {
+            d3.selectAll("g").filter(function(){return (d3.select(this).attr("class") == "annotations");}).remove();
+            createScene4();
+        } else if (currectScene == 4) {
+            d3.selectAll("g").filter(function(){return (d3.select(this).attr("class") == "annotations");}).remove();
+            createScene5();
+        } else if (currectScene == 5) {
+            svg.selectAll(".graphInfo").remove();
+            g.selectAll()
+                .data(data)
+                .enter()
+                .append("circle") 
+                .attr("cx", function(d) { return xScale(d.job_title); })
+                .attr("cy", function(d) { return yScale( parseInt(d.salary_in_usd));})
+                .attr("r", 3);
+            currectScene = 1;
+        }
+    }
+
+    // Next Button
+    const nextButton = document.createElement('button');
+    nextButton.innerText = 'NEXT';
+    nextButton.id = 'nextButton';
+    nextButton.addEventListener('click', function() { changeSceneNext() });
+    document.body.appendChild(nextButton);
+
+    // Back Button Function
+    function changeSceneBack() {
+        if (currectScene == 1) {
+            createScene5();
+        } else if (currectScene == 2) {
+            d3.selectAll("g").filter(function(){return (d3.select(this).attr("class") == "annotations");}).remove();
+            currectScene = 1;
+        } else if (currectScene == 3) {
+            d3.selectAll("g").filter(function(){return (d3.select(this).attr("class") == "annotations");}).remove();
+            createScene2();
+        } else if (currectScene == 4) {
+            d3.selectAll("g").filter(function(){return (d3.select(this).attr("class") == "annotations");}).remove();
+            createScene3();
+        } else if (currectScene == 5) {
+            svg.selectAll(".graphInfo").remove();
+            g.selectAll()
+                .data(data)
+                .enter()
+                .append("circle") 
+                .attr("cx", function(d) { return xScale(d.job_title); })
+                .attr("cy", function(d) { return yScale( parseInt(d.salary_in_usd));})
+                .attr("r", 3);
+            createScene4();
+        }
+
+    }
+
+    // Back Button
+    const backButton = document.createElement('button');
+    backButton.innerText = 'BACK';
+    backButton.id = 'backButton';
+    backButton.addEventListener('click', function() { changeSceneBack() });
+    document.body.appendChild(backButton);
+
+    // Helper Functions
+
+    // Create Scene 2 Function
+    function createScene2() {
+        // Annotations for Scene 2 - Jobs that are popular
+        const dataScienceAnnotations = [
+                {
+                    note: {
+                    label: "There are many data points correlating to Data Scientist jobs which shows how popular this position is. It has a wide range of salaries available for many different experience levels",
+                    title: "Data Science Roles",
+                    wrap: 200,
+                    padding: 10 },
+                    color: ["#69b3a2"],
+                    x: 190,
+                    y: 400,
+                    dy: -150,
+                    dx: 25,
+                    connector: { end: "arrow" }
+                }
+            ]
+            const dataAnalystAnnotations = [
+                {
+                    note: {
+                    label: "Data Analysts are another popular job that is in demand and has a lot job opportunities",
+                    title: "Data Analyst Roles",
+                    wrap: 200,
+                    padding: 10 },
+                    color: ["#69b3a2"],
+                    x: 965,
+                    y: 500,
+                    dy: -150,
+                    dx: 25,
+                    connector: { end: "arrow" }
+                }
+            ]
+            const makeAnnotations1 = d3.annotation()
+                .annotations(dataScienceAnnotations)
+            const makeAnnotations2 = d3.annotation()
+                .annotations(dataAnalystAnnotations)
+
+            d3.select("#chart")
+                .append("g")
+                .call(makeAnnotations1)
+            d3.select("#chart")
+                .append("g")
+                .call(makeAnnotations2)
+            currectScene = 2;
+    }
+
+    //Creates Scene 3 Function 
+    function createScene3() {
+        //Annotations Scene 3 - Jobs that aren't popular
+        const productDataAnalystAnnotations = [
+                {
+                    note: {
+                    label: "Compared to Data Analyst roles, Product Data Analyst are less popular and tend to have a lower salary range.",
+                    title: "Product Data Analyst Roles",
+                    align: "middle",
+                    wrap: 200,
+                    padding: 10 },
+                    color: ["lightcoral"],
+                    x: 636,
+                    y: 600,
+                    dy: -150,
+                    dx: -10,
+                    connector: { end: "arrow" }
+                }
+            ]
+        const leadDataScientistAnnotations = [
+                {
+                    note: {
+                    label: "Roles that are in positions of leadership appear to be less common due to needing a higher level of experience.",
+                    title: "Lead Data Scienctist Roles",
+                    align: "right",
+                    wrap: 200,
+                    padding: 10 },
+                    color: ["lightcoral"],
+                    x: 1100,
+                    y: 365,
+                    dy: -100,
+                    dx: -50,
+                    connector: { end: "arrow" }
+                }
+            ]
+        const makeAnnotations1 = d3.annotation()
+                .annotations(productDataAnalystAnnotations)
+        const makeAnnotations2 = d3.annotation()
+                .annotations(leadDataScientistAnnotations)
+
+        d3.select("#chart")
+                .append("g")
+                .call(makeAnnotations1)
+        d3.select("#chart")
+                .append("g")
+                .call(makeAnnotations2)
+
+         currectScene = 3;
+    }
+
+    // Create Scene 4 Function
+    function createScene4() {
+        //Annotations Scene 4 - High salary outliers
+        const outlierAnnotations = [
+                {
+                    note: {
+                    label: "For some positions, you can see that there are one or two very high salaries. These jobs are mostly senior level positions and are more sparse.",
+                    title: "Salary Outliers",
+                    align: "left",
+                    wrap: 200,
+                    padding: 10 },
+                    color: ["peru"],
+                    x: 190,
+                    y: 55,
+                    dy: 50,
+                    dx: 50,
+                    connector: { end: "arrow" }
+                }
+        ]
+                
+        const makeAnnotations1 = d3.annotation()
+                .annotations(outlierAnnotations)
+
+        d3.select("#chart")
+                .append("g")
+                .call(makeAnnotations1)
+        currectScene = 4;
+    }
+
+    // Create Scene 5 function 
+    function createScene5() {
+        // User explores
+
+        // Tooltip for data points
+        g.selectAll()
+                .data(data)
+                .enter()
+                .append("circle") 
+                .attr("cx", function(d) { return xScale(d.job_title); })
+                .attr("cy", function(d) { return yScale( parseInt(d.salary_in_usd));})
+                .attr("r", 3)
+                .on('mouseover', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('100')
+                        .attr("r", 7);
+
+                    div.transition()
+                        .duration(100)
+                        .style("opacity", 1);
+                    
+                    div.html("Salary: $" + d.salary_in_usd + 
+                    "<br/>" + " Work Year: " + d.work_year + 
+                    "<br/>" + " Experience Level: " + d.experience_level + 
+                    "<br/>" + " Employement Type: " + d.employment_type + 
+                    "<br/>" + " Remote Ratio: " + d.remote_ratio + 
+                    "<br/>" + " Employee Residence: " + d.employee_residence)
+                        .style("left", (d3.event.pageX + 10) + "px")
+                        .style("top", (d3.event.pageY - 15) + "px");
+                })
+                .on('mouseout', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('200')
+                        .attr("r", 3);
+
+                    div.transition()
+                        .duration('200')
+                        .style("opacity", 0);
+                });
+
+            // Graph Abbr Key
+            d3.select("svg").append('rect').attr("class", "graphInfo").attr("x", 750).attr("y", 20)
+                .attr('width', 600).attr('height', 110).style('fill', 'papayawhip');
+            // Experience Level 
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 775).attr("y", 40)
+                .text("Experience Level: ").style("font-size", "20px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 775).attr("y", 60)
+                .text("EN = Entry-level / Junior").style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 775).attr("y", 80)
+                .text("MI = Mid-level / Intermediate").style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 775).attr("y", 100)
+                .text("SE = Senior-level / Expert").style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 775).attr("y", 120)
+                .text("EX = Executive-level / Director").style("font-size", "15px");
+            // Employment Type
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 1000).attr("y", 40)
+                .text("Employment Type: ").style("font-size", "20px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 1000).attr("y", 60)
+                .text("PT = Part-time").style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 1000).attr("y", 80)
+                .text("FT = Full-time").style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 1000).attr("y", 100)
+                .text("CT = Contract").style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 1000).attr("y", 120)
+                .text("FL = Freelance").style("font-size", "15px");
+            // Remote Ratio
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 1200).attr("y", 40)
+                .text("Remote Ratio: ").style("font-size", "20px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 1200).attr("y", 60)
+                .text("0 = No remote work").style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 1200).attr("y", 80)
+                .text("50 = Partially remote").style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 1200).attr("y", 100)
+                .text("100 = Fully remote").style("font-size", "15px");
+            // User exploration info
+            d3.select("svg").append('rect').attr("class", "graphInfo").attr("x", 750).attr("y", 140)
+                .attr('width', 600).attr('height', 110).style('fill', 'burlywood');
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 760).attr("y", 170)
+                .text("Now it's time for you to explore! Here are a few pointers before you get started:")
+                .style("font-size", "18px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 800).attr("y", 190)
+                .text("1. Hover over each data point to get more information on a specific job")
+                .style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 800).attr("y", 210)
+                .text("2. The key on the top clarifies the meaning of some of the abbreviation that are present")
+                .style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 800).attr("y", 230)
+                .text("3. Scroll to the right to view more data science roles ")
+                .style("font-size", "15px");
+
+            currectScene = 5;
+    }
+
+}
+</script>
+<p style="font-size:15px"> Created by Aareana Reza for CS 416 Narrative Visualization Project
+<br> Source Code: <a href="https://github.com/AareanaReza/AareanaReza.github.io">AareanaReza.github.io</a>
+<br> Dataset Used: <a href="https://www.kaggle.com/datasets/ruchi798/data-science-job-salaries">Data Science Job Salaries</a> </p>
+</body>
+</html>
