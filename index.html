@@ -15,37 +15,45 @@
         pointer-events: none;
         font-size: .7rem; } 
     #backButton {
-        position: relative;
-        bottom: 800px; 
-        margin-left: -140px;
+        position:absolute;
+        bottom: 296px; 
+        margin-left: 25px;
         font-size: large;
         color: whitesmoke;
         background-color: cadetblue;}
     #nextButton {
-        position: relative;
-        bottom: 800px; 
-        margin-left: 90px;
+        position: absolute;
+        bottom: 296px; 
+        margin-left: 100px;
         font-size: large;
         color: whitesmoke;
         background-color: cadetblue;}
+    #selectButton {
+        position: relative;
+        bottom: 660px; 
+        margin-left: 300px;
+        font-size: 18px;
+        color: darkslategray;
+        width: 400px;}
 </style>
 <body onload='init()' style="background-color:whitesmoke">
-    <h1> Salary Comparisons Across Different Data Science Jobs </h1>
-    <p style="font-size:18px"> &emsp; Data Science is a field that is currently booming and has a growing number of job opportunities.
+    <h1 style="text-align:center"> Salary Comparisons Across Different Data Science Jobs </h1>
+    <p style="font-size:18px;text-align:center"> &emsp; Data Science is a field that is currently booming and has a growing number of job opportunities.
          This career field also encompasses a variety of different job titles. <br> All of these jobs cover a diverse range of qualities, 
          for example various levels of experience, skill sets, and salary expectations. There are a lot of possibilities <br> for people who wish 
          to pursue a career in this field, but since there are so many options it can be intimidating to find a role that is best suited to you.
-         The graph below <br> is a tool to help people find something that fits their preferred salary expectations, in addition to other preference 
+         The graph below <br> is a tool to help people find something that fits their preferred salary expectations, in addition to other preferences 
          like experience level, employment type, remote ratio, <br> and location. The graph also allows users to easily sort through and compare 
          particular data science positions based on things like popularity and availability.
     </p>
-    <p style="font-size:18px"> &emsp; Click through the NEXT and BACK buttons to learn more and be guided through the graph. And, at the end, 
+    <p style="font-size:18px;text-align:center"> &emsp; Click through the NEXT and BACK buttons to learn more and be guided through the graph. And, at the end, 
         get the opportunity to explore the graph yourself!
     </p>
-    <p style="font-size:13px"> &emsp; Note: Some outliers have been excluded from the graph for visualization purposes </p>
+    <p style="font-size:13px;text-align:center"> &emsp; Note: Some outliers have been excluded from the graph for visualization purposes </p>
     <p> <br>
     </p>
 <svg width=8000 height=750 id="chart"></svg>
+<div id="selectButton"></div>
 <script>
 async function init() {
     // Data
@@ -135,6 +143,8 @@ async function init() {
             createScene5();
         } else if (currectScene == 5) {
             svg.selectAll(".graphInfo").remove();
+            document.getElementById("level").remove();
+            document.getElementById("label").remove();
             g.selectAll()
                 .data(data)
                 .enter()
@@ -168,6 +178,8 @@ async function init() {
             createScene3();
         } else if (currectScene == 5) {
             svg.selectAll(".graphInfo").remove();
+            document.getElementById("level").remove();
+            document.getElementById("label").remove();
             g.selectAll()
                 .data(data)
                 .enter()
@@ -391,21 +403,230 @@ async function init() {
                 .text("100 = Fully remote").style("font-size", "15px");
             // User exploration info
             d3.select("svg").append('rect').attr("class", "graphInfo").attr("x", 750).attr("y", 140)
-                .attr('width', 600).attr('height', 110).style('fill', 'burlywood');
+                .attr('width', 600).attr('height', 120).style('fill', 'burlywood');
             d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 760).attr("y", 170)
                 .text("Now it's time for you to explore! Here are a few pointers before you get started:")
                 .style("font-size", "18px");
             d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 800).attr("y", 190)
-                .text("1. Hover over each data point to get more information on a specific job")
-                .style("font-size", "15px");
+                .text("1. Use the drop down on the left to filter the data based on experience level")
             d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 800).attr("y", 210)
-                .text("2. The key on the top clarifies the meaning of some of the abbreviations that are present")
+                .text("2. Hover over each data point to get more information on a specific job")
                 .style("font-size", "15px");
             d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 800).attr("y", 230)
-                .text("3. Scroll to the right to view more data science roles ")
+                .text("3. The key on the top clarifies the meaning of some of the abbreviations that are present")
+                .style("font-size", "15px");
+            d3.select("svg").append("text").attr("class", "graphInfo").attr("x", 800).attr("y", 250)
+                .text("4. Scroll to the right to view more data science roles ")
                 .style("font-size", "15px");
 
+            // Drop down
+            document.re
+            var values = ["All", "Entry-level / Junior", "Mid-level / Intermediate", "Senior-level / Expert", "Executive-level / Director"];
+
+            var select = document.createElement("select");
+            select.name = "experience level";
+            select.id = "level";
+            for (const val of values) {
+                var option = document.createElement("option");
+                option.value = val;
+                option.text = val.charAt(0).toUpperCase() + val.slice(1);
+                select.appendChild(option);
+            }
+
+            var label = document.createElement("label");
+            label.innerHTML = "Choose an experience level: "
+            label.htmlFor = "level";
+            label.id = "label";
+
+            document.getElementById("selectButton").appendChild(label).appendChild(select);
+
+            d3.select('#selectButton').on('change', updateFilter);
+
+
             currectScene = 5;
+    }
+
+    // Update function for drop down selection 
+
+    function updateFilter() {
+        var selection = d3.select("#level").property("value");
+        svg.selectAll("circle").remove();
+        if (selection === 'All') {
+            g.selectAll()
+                .data(data)
+                .enter()
+                .append("circle") 
+                .attr("cx", function(d) { return xScale(d.job_title); })
+                .attr("cy", function(d) { return yScale( parseInt(d.salary_in_usd));})
+                .attr("r", 3)
+                .on('mouseover', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('100')
+                        .attr("r", 7);
+
+                    div.transition()
+                        .duration(100)
+                        .style("opacity", 1);
+                    
+                    div.html("Salary: $" + d.salary_in_usd + 
+                    "<br/>" + " Work Year: " + d.work_year + 
+                    "<br/>" + " Experience Level: " + d.experience_level + 
+                    "<br/>" + " Employement Type: " + d.employment_type + 
+                    "<br/>" + " Remote Ratio: " + d.remote_ratio + 
+                    "<br/>" + " Employee Residence: " + d.employee_residence)
+                        .style("left", (d3.event.pageX + 10) + "px")
+                        .style("top", (d3.event.pageY - 15) + "px");
+                })
+                .on('mouseout', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('200')
+                        .attr("r", 3);
+
+                    div.transition()
+                        .duration('200')
+                        .style("opacity", 0);
+                });
+        } else if (selection === 'Entry-level / Junior') {
+            g.selectAll()
+                .data(data)
+                .enter()
+                .append("circle") 
+                .attr("cx", function(d) { if (d.experience_level === 'EN') { return xScale(d.job_title); }})
+                .attr("cy", function(d) { if (d.experience_level === 'EN') {return yScale( parseInt(d.salary_in_usd));}})
+                .attr("r", 3)
+                .on('mouseover', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('100')
+                        .attr("r", 7);
+
+                    div.transition()
+                        .duration(100)
+                        .style("opacity", 1);
+                    
+                    div.html("Salary: $" + d.salary_in_usd + 
+                    "<br/>" + " Work Year: " + d.work_year + 
+                    "<br/>" + " Experience Level: " + d.experience_level + 
+                    "<br/>" + " Employement Type: " + d.employment_type + 
+                    "<br/>" + " Remote Ratio: " + d.remote_ratio + 
+                    "<br/>" + " Employee Residence: " + d.employee_residence)
+                        .style("left", (d3.event.pageX + 10) + "px")
+                        .style("top", (d3.event.pageY - 15) + "px");
+                })
+                .on('mouseout', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('200')
+                        .attr("r", 3);
+
+                    div.transition()
+                        .duration('200')
+                        .style("opacity", 0);
+                });
+        } else if (selection === 'Mid-level / Intermediate') {
+            g.selectAll()
+                .data(data)
+                .enter()
+                .append("circle") 
+                .attr("cx", function(d) { if (d.experience_level === 'MI') { return xScale(d.job_title); }})
+                .attr("cy", function(d) { if (d.experience_level === 'MI') {return yScale( parseInt(d.salary_in_usd));}})
+                .attr("r", 3)
+                .on('mouseover', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('100')
+                        .attr("r", 7);
+
+                    div.transition()
+                        .duration(100)
+                        .style("opacity", 1);
+                    
+                    div.html("Salary: $" + d.salary_in_usd + 
+                    "<br/>" + " Work Year: " + d.work_year + 
+                    "<br/>" + " Experience Level: " + d.experience_level + 
+                    "<br/>" + " Employement Type: " + d.employment_type + 
+                    "<br/>" + " Remote Ratio: " + d.remote_ratio + 
+                    "<br/>" + " Employee Residence: " + d.employee_residence)
+                        .style("left", (d3.event.pageX + 10) + "px")
+                        .style("top", (d3.event.pageY - 15) + "px");
+                })
+                .on('mouseout', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('200')
+                        .attr("r", 3);
+
+                    div.transition()
+                        .duration('200')
+                        .style("opacity", 0);
+                });
+        } else if (selection === 'Senior-level / Expert') {
+            g.selectAll()
+                .data(data)
+                .enter()
+                .append("circle") 
+                .attr("cx", function(d) { if (d.experience_level == 'SE') { return xScale(d.job_title); }})
+                .attr("cy", function(d) { if (d.experience_level == 'SE') {return yScale( parseInt(d.salary_in_usd));}})
+                .attr("r", 3)
+                .on('mouseover', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('100')
+                        .attr("r", 7);
+
+                    div.transition()
+                        .duration(100)
+                        .style("opacity", 1);
+                    
+                    div.html("Salary: $" + d.salary_in_usd + 
+                    "<br/>" + " Work Year: " + d.work_year + 
+                    "<br/>" + " Experience Level: " + d.experience_level + 
+                    "<br/>" + " Employement Type: " + d.employment_type + 
+                    "<br/>" + " Remote Ratio: " + d.remote_ratio + 
+                    "<br/>" + " Employee Residence: " + d.employee_residence)
+                        .style("left", (d3.event.pageX + 10) + "px")
+                        .style("top", (d3.event.pageY - 15) + "px");
+                })
+                .on('mouseout', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('200')
+                        .attr("r", 3);
+
+                    div.transition()
+                        .duration('200')
+                        .style("opacity", 0);
+                });
+        } else if (selection === 'Executive-level / Director') {
+            g.selectAll()
+                .data(data)
+                .enter()
+                .append("circle") 
+                .attr("cx", function(d) { if (d.experience_level == 'EX') { return xScale(d.job_title); }})
+                .attr("cy", function(d) { if (d.experience_level == 'EX') {return yScale( parseInt(d.salary_in_usd));}})
+                .attr("r", 3)
+                .on('mouseover', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('100')
+                        .attr("r", 7);
+
+                    div.transition()
+                        .duration(100)
+                        .style("opacity", 1);
+                    
+                    div.html("Salary: $" + d.salary_in_usd + 
+                    "<br/>" + " Work Year: " + d.work_year + 
+                    "<br/>" + " Experience Level: " + d.experience_level + 
+                    "<br/>" + " Employement Type: " + d.employment_type + 
+                    "<br/>" + " Remote Ratio: " + d.remote_ratio + 
+                    "<br/>" + " Employee Residence: " + d.employee_residence)
+                        .style("left", (d3.event.pageX + 10) + "px")
+                        .style("top", (d3.event.pageY - 15) + "px");
+                })
+                .on('mouseout', function (d, i) {
+                    d3.select(this).transition()
+                        .duration('200')
+                        .attr("r", 3);
+
+                    div.transition()
+                        .duration('200')
+                        .style("opacity", 0);
+                });
+        }
     }
 
 }
