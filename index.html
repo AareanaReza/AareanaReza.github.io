@@ -627,6 +627,15 @@ async function init() {
                         .style("opacity", 0);
                 });
         }
+        g.selectAll()
+            .data(data)
+            .enter()
+            .append("circle") 
+            .attr("cx",  0)
+            .attr("cy", 0)
+            .attr("r", 3)
+            .style('fill', 'black');
+
     }
 
 }
